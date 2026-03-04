@@ -1,0 +1,67 @@
+{
+  "source_dir": "/Users/mars/jobs/jse/moonbit",
+  "name": "marchliu/jse",
+  "packages": [
+    {
+      "is-main": false,
+      "is-third-party": false,
+      "root-path": "/Users/mars/jobs/jse/moonbit/src/jse",
+      "root": "marchliu/jse",
+      "rel": "jse",
+      "files": {
+        "/Users/mars/jobs/jse/moonbit/src/jse/engine.mbt": {
+          "backend": [
+            "Wasm",
+            "WasmGC",
+            "Js",
+            "Native",
+            "LLVM"
+          ],
+          "optlevel": [
+            "Release",
+            "Debug"
+          ]
+        }
+      },
+      "wbtest-files": {},
+      "test-files": {},
+      "mbt-md-files": {},
+      "deps": [
+        {
+          "path": "moonbitlang/core/builtin",
+          "alias": "builtin",
+          "fspath": "/Users/mars/.moon/lib/core/builtin"
+        },
+        {
+          "path": "moonbitlang/core/json",
+          "alias": "json",
+          "fspath": "/Users/mars/.moon/lib/core/json"
+        },
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "/Users/mars/.moon/lib/core/prelude"
+        }
+      ],
+      "wbtest-deps": [
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "/Users/mars/.moon/lib/core/prelude"
+        }
+      ],
+      "test-deps": [
+        {
+          "path": "moonbitlang/core/prelude",
+          "alias": "prelude",
+          "fspath": "/Users/mars/.moon/lib/core/prelude"
+        }
+      ],
+      "artifact": "/Users/mars/jobs/jse/moonbit/_build/wasm-gc/release/check/jse/jse.mi"
+    }
+  ],
+  "deps": [],
+  "backend": "wasm-gc",
+  "opt_level": "release",
+  "source": "src"
+}
