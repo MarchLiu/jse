@@ -227,6 +227,8 @@ JSE：
 
 ## 作者
 
+我的名字是刘鑫(Mars Liu or Liu Xin)，曾经在十余年间维护了 Python Tutorial 2.2 到 2.7 的简体中文版翻译。是代数组合子库 Jaskell/pyparsec 系列的作者，2022年出版了《微型 LISP 解释器的构造与实现》一书。现就职于北京中关村学院（ https://bza.edu.cn ）智能创新中心。
+
 MarsLiu
 GitHub: [https://github.com/MarchLiu](https://github.com/MarchLiu)
 
