@@ -13,7 +13,9 @@
       "Bash(python3 -c:*)",
       "Bash(cat:*)",
       "Bash(npm run build:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(python -m pytest tests/test_query.py -v)",
+      "Bash(python -m pytest:*)"
     ]
   }
 }

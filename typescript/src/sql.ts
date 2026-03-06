@@ -14,10 +14,17 @@ export function patternToTriple(
   predicate: string,
   object: string
 ): unknown[] {
-  if (subject === "$*" && object === "$*") {
-    return [predicate];
+  let pattern = [];
+  if (subject !== "*") {
+    pattern.push(subject);
   }
-  return [subject, predicate, object];
+  if (predicate !== "*") {
+    pattern.push(predicate);
+  }
+  if (object !== "*") {
+    pattern.push(object);
+  }
+  return pattern;
 }
 
 /**

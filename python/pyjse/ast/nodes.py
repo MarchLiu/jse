@@ -170,21 +170,54 @@ class ObjectExpressionNode(AstNode):
         if functor is None:
             raise NameError(f"Unknown operator: {self._operator}")
 
-        # Evaluate the value
-        evaluated_value = env.eval(self._value)
+        # For object expressions, we need to evaluate the value as arguments
+        # If the value is an ArrayNode, we want to evaluate its elements as data,
+        # NOT as a function call (which ArrayNode.apply() would do)
+        from .nodes import ArrayNode
 
-        # For special operators like $expr, value might need wrapping
         if self._operator == "$expr":
-            args = [evaluated_value]
-        elif isinstance(evaluated_value, list):
-            args = evaluated_value
+            # $expr evaluates the whole expression and returns the result
+            args = [env.eval(self._value)]
+        elif isinstance(self._value, ArrayNode):
+            # Get the elements of the array node
+            elements = self._value._elements
+            # Evaluate each element as data (not as function calls)
+            args = [_deep_eval(env, elem) for elem in elements]
         else:
-            args = [evaluated_value]
+            # For other types, just evaluate normally
+            args = [env.eval(self._value)]
 
         # Call the functor
         if callable(functor):
             return functor(env, *args)
         return functor
+
+
+def _deep_eval(env: 'Env', value: JseValue) -> JseValue:
+    """Deep evaluate a value, handling nested arrays and AST nodes.
+
+    Args:
+        env: Environment for evaluation
+        value: Value to evaluate
+
+    Returns:
+        Evaluated value
+    """
+    # First, evaluate any AST node
+    evaluated = env.eval(value)
+
+    # If result is an array, recursively evaluate its elements
+    if isinstance(evaluated, list):
+        return [_deep_eval(env, item) for item in evaluated]
+
+    # If result is a plain object (not AST node), evaluate its values
+    if isinstance(evaluated, dict):
+        result = {}
+        for k, v in evaluated.items():
+            result[k] = _deep_eval(env, v)
+        return result
+
+    return evaluated
 
 
 class QuoteNode(AstNode):

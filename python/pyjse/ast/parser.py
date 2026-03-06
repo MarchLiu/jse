@@ -22,6 +22,7 @@ def _is_symbol(s: str) -> bool:
     """Check if string is a JSE symbol.
 
     Symbols start with $ but not $$.
+    Wildcard $* is not a symbol.
 
     Args:
         s: String to check
@@ -29,6 +30,9 @@ def _is_symbol(s: str) -> bool:
     Returns:
         True if string is a symbol
     """
+    # Wildcard $* is a literal string, not a symbol
+    if s == "$*":
+        return False
     return s.startswith("$") and not s.startswith("$$")
 
 
