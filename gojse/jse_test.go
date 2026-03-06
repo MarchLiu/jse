@@ -4,10 +4,24 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/MarchLiu/jse/gojse/functors"
 )
 
 func newEngine() *Engine {
-	return NewEngine(ExpressionEnv{})
+	return WithEnv()
+}
+
+func newEngineWithDefault() *Engine {
+	return WithDefaultEnv()
+}
+
+func newEngineWithSQL() *Engine {
+	env := NewEnv()
+	env.Load(functors.BuiltinFunctors)
+	env.Load(functors.UtilsFunctors)
+	env.Load(functors.SQLFunctors)
+	return NewEngine(env)
 }
 
 func TestBasicLiterals(t *testing.T) {
@@ -58,7 +72,7 @@ func TestArrayAndObject(t *testing.T) {
 }
 
 func TestLogic(t *testing.T) {
-	e := newEngine()
+	e := newEngineWithDefault()
 
 	// $and
 	if v, err := e.Execute([]interface{}{"$and", true, true, true}); err != nil || v != true {
@@ -96,7 +110,7 @@ func TestLogic(t *testing.T) {
 }
 
 func TestQueryBasic(t *testing.T) {
-	e := newEngine()
+	e := newEngineWithSQL()
 
 	raw := []byte(`{
 	  "$expr": ["$pattern", "$*", "author of", "$*"]
@@ -125,7 +139,7 @@ func TestQueryBasic(t *testing.T) {
 }
 
 func TestQueryCombined(t *testing.T) {
-	e := newEngine()
+	e := newEngineWithSQL()
 
 	raw := []byte(`{
 	  "$query": [
@@ -158,4 +172,3 @@ func TestQueryCombined(t *testing.T) {
 		t.Fatalf("sql does not contain expected substrings: %q", sql)
 	}
 }
-

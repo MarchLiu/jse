@@ -1,278 +1,216 @@
 package jse
 
 import (
-	"encoding/json"
 	"fmt"
-	"regexp"
-	"strings"
+
+	"github.com/MarchLiu/jse/gojse/ast"
+	"github.com/MarchLiu/jse/gojse/functors"
 )
 
 // Value is the generic JSON value type used by the engine.
 type Value = interface{}
 
-// Env defines the environment for JSE execution.
-// Implement this interface to provide custom symbol resolution.
-type Env interface {
-	// Resolve returns (value, true) if the symbol is bound, or (nil, false) otherwise.
-	Resolve(symbol string) (Value, bool)
+// Functor is a function that takes an environment and arguments.
+// Re-exported from functors package for convenience.
+type Functor = functors.Functor
+
+// Env represents a JSE execution environment with scope chaining.
+type Env struct {
+	parent   *Env
+	bindings map[string]Value
+	functors map[string]functors.Functor
 }
 
-// ExpressionEnv is a minimal environment that does not resolve any symbols.
-type ExpressionEnv struct{}
-
-func (ExpressionEnv) Resolve(string) (Value, bool) { return nil, false }
-
-// Engine executes JSE expressions.
-type Engine struct {
-	env Env
-}
-
-// NewEngine constructs a new Engine with the given environment.
-func NewEngine(env Env) *Engine {
-	return &Engine{env: env}
-}
-
-// Execute evaluates a JSE expression.
-func (e *Engine) Execute(expr Value) (Value, error) {
-	switch v := expr.(type) {
-	case nil, bool, float64, float32, int, int32, int64, uint, uint32, uint64:
-		return expr, nil
-	case string:
-		return unescapeSymbol(v), nil
-	case []interface{}:
-		if len(v) == 0 {
-			return v, nil
-		}
-		if sym, ok := v[0].(string); ok && isSymbol(sym) {
-			return e.evalSExpr(sym, v[1:])
-		}
-		out := make([]interface{}, len(v))
-		for i, el := range v {
-			ev, err := e.Execute(el)
-			if err != nil {
-				return nil, err
-			}
-			out[i] = ev
-		}
-		return out, nil
-	case map[string]interface{}:
-		if sym, ok := getSExprKey(v); ok {
-			tail, ok := v[sym]
-			if !ok {
-				tail = nil
-			}
-			var args []interface{}
-			if sym == "$expr" {
-				args = []interface{}{tail}
-			} else if arr, ok := tail.([]interface{}); ok {
-				args = arr
-			} else {
-				args = []interface{}{tail}
-			}
-			return e.evalSExpr(sym, args)
-		}
-		result := make(map[string]interface{}, len(v))
-		for k, val := range v {
-			key := unescapeSymbol(k)
-			ev, err := e.Execute(val)
-			if err != nil {
-				return nil, err
-			}
-			result[key] = ev
-		}
-		return result, nil
-	default:
-		// Unknown concrete type: pass through as-is.
-		return expr, nil
+// NewEnv creates a new empty environment.
+func NewEnv() *Env {
+	return &Env{
+		parent:   nil,
+		bindings: make(map[string]Value),
+		functors: make(map[string]functors.Functor),
 	}
 }
 
-func isSymbol(s string) bool {
-	return strings.HasPrefix(s, "$") && !strings.HasPrefix(s, "$$")
-}
-
-func unescapeSymbol(s string) string {
-	if strings.HasPrefix(s, "$$") {
-		return s[1:]
-	}
-	return s
-}
-
-func getSExprKey(obj map[string]interface{}) (string, bool) {
-	var found string
-	for k := range obj {
-		if strings.HasPrefix(k, "$") && !strings.HasPrefix(k, "$$") {
-			if found != "" {
-				return "", false
-			}
-			found = k
-		}
-	}
-	if found == "" {
-		return "", false
-	}
-	return found, true
-}
-
-func (e *Engine) evalSExpr(symbol string, args []interface{}) (Value, error) {
-	// $quote: do not evaluate the argument
-	if symbol == "$quote" {
-		if len(args) == 0 {
-			return nil, nil
-		}
-		return args[0], nil
-	}
-
-	evaluated := make([]interface{}, len(args))
-	for i, a := range args {
-		ev, err := e.Execute(a)
-		if err != nil {
-			return nil, err
-		}
-		evaluated[i] = ev
-	}
-
-	switch symbol {
-	case "$and":
-		return evalAnd(evaluated), nil
-	case "$or":
-		return evalOr(evaluated), nil
-	case "$not":
-		return evalNot(evaluated), nil
-	case "$expr":
-		if len(evaluated) == 0 {
-			return nil, nil
-		}
-		return evaluated[0], nil
-	case "$pattern":
-		return evalPattern(evaluated)
-	case "$query":
-		return evalQuery(evaluated)
-	default:
-		if v, ok := e.env.Resolve(symbol); ok {
-			return v, nil
-		}
-		return nil, fmt.Errorf("unknown symbol: %s", symbol)
+// NewEnvWithParent creates a new environment with a parent (for closures).
+func NewEnvWithParent(parent *Env) *Env {
+	return &Env{
+		parent:   parent,
+		bindings: make(map[string]Value),
+		functors: make(map[string]functors.Functor),
 	}
 }
 
-func evalAnd(values []interface{}) bool {
-	for _, v := range values {
-		if !toBool(v) {
-			return false
-		}
-	}
-	return true
+// GetParent returns the parent environment.
+func (e *Env) GetParent() *Env {
+	return e.parent
 }
 
-func evalOr(values []interface{}) bool {
-	for _, v := range values {
-		if toBool(v) {
-			return true
-		}
+// Resolve looks up a symbol in the scope chain.
+func (e *Env) Resolve(symbol string) (Value, bool) {
+	// Check functors first
+	if fn, ok := e.functors[symbol]; ok {
+		return fn, true
+	}
+	// Then check bindings
+	if v, ok := e.bindings[symbol]; ok {
+		return v, true
+	}
+	// Check parent
+	if e.parent != nil {
+		return e.parent.Resolve(symbol)
+	}
+	return nil, false
+}
+
+// Register registers a new symbol (throws if exists).
+func (e *Env) Register(name string, value Value) error {
+	if _, exists := e.bindings[name]; exists {
+		return fmt.Errorf("symbol '%s' already exists in current scope", name)
+	}
+	e.bindings[name] = value
+	return nil
+}
+
+// Set sets a symbol (overwrites if exists).
+func (e *Env) Set(name string, value Value) {
+	e.bindings[name] = value
+}
+
+// Exists checks if a symbol exists in the scope chain.
+func (e *Env) Exists(name string) bool {
+	if _, ok := e.bindings[name]; ok {
+		return true
+	}
+	if e.parent != nil {
+		return e.parent.Exists(name)
 	}
 	return false
 }
 
-func evalNot(values []interface{}) bool {
-	if len(values) == 0 {
-		return true
-	}
-	return !toBool(values[0])
+// RegisterFunctor registers a functor.
+func (e *Env) RegisterFunctor(name string, functor functors.Functor) {
+	e.functors[name] = functor
 }
 
-func toBool(v interface{}) bool {
-	switch b := v.(type) {
-	case bool:
-		return b
-	case nil:
-		return false
-	default:
-		return true
+// Load loads a functor module into this environment.
+func (e *Env) Load(functors map[string]functors.Functor) {
+	for name, fn := range functors {
+		e.functors[name] = fn
 	}
 }
 
-// --- SQL helpers mirroring other language implementations ---
+// ResolveFunctor resolves a functor from the environment chain.
+func (e *Env) ResolveFunctor(name string) (functors.Functor, bool) {
+	if fn, ok := e.functors[name]; ok {
+		return fn, true
+	}
+	if e.parent != nil {
+		return e.parent.ResolveFunctor(name)
+	}
+	return nil, false
+}
+
+// ApplyFunctor applies a functor with evaluated values.
+func (e *Env) ApplyFunctor(name string, args []interface{}) (interface{}, error) {
+	fn, ok := e.ResolveFunctor(name)
+	if !ok {
+		return nil, fmt.Errorf("unknown symbol: %s", name)
+	}
+	return fn(e, args)
+}
+
+// Eval evaluates an AST node.
+func (e *Env) Eval(node ast.AstNode) (Value, error) {
+	return node.Apply(e)
+}
+
+// EvalJSON parses and evaluates a JSON value.
+func (e *Env) EvalJSON(json Value) (Value, error) {
+	parser := ast.NewParser(e)
+	node, err := parser.Parse(json)
+	if err != nil {
+		return nil, err
+	}
+	return node.Apply(e)
+}
+
+// --- Backward compatibility ---
+
+// LegacyEnv interface for backward compatibility with v0.1.0.
+type LegacyEnv interface {
+	Resolve(symbol string) (Value, bool)
+}
+
+// legacyEnv wraps the new Env to implement the old interface.
+type legacyEnv struct {
+	env *Env
+}
+
+func (l legacyEnv) Resolve(symbol string) (Value, bool) {
+	return l.env.Resolve(symbol)
+}
+
+// ExpressionEnv is a minimal environment for backward compatibility.
+var ExpressionEnv LegacyEnv = legacyEnv{env: NewEnv()}
+
+// --- Engine ---
+
+// Engine executes JSE expressions.
+type Engine struct {
+	env    *Env
+	parser *ast.Parser
+}
+
+// NewEngine constructs a new Engine with the given environment.
+func NewEngine(env *Env) *Engine {
+	parser := ast.NewParser(env)
+	return &Engine{env: env, parser: parser}
+}
+
+// WithEnv creates a new Engine with minimal environment (no functors loaded).
+// Suitable for basic JSON operations without any functors.
+func WithEnv() *Engine {
+	env := NewEnv()
+	return NewEngine(env)
+}
+
+// WithDefaultEnv creates a new Engine with default functors loaded.
+// Includes: builtin + utils
+// Excludes: lisp (too powerful for most business use), sql (domain-specific)
+func WithDefaultEnv() *Engine {
+	env := NewEnv()
+	env.Load(functors.BuiltinFunctors)
+	env.Load(functors.UtilsFunctors)
+	return NewEngine(env)
+}
+
+// Execute evaluates a JSE expression.
+func (e *Engine) Execute(expr Value) (Value, error) {
+	// Parse into AST
+	node, err := e.parser.Parse(expr)
+	if err != nil {
+		return nil, err
+	}
+
+	// Evaluate using environment
+	return e.env.Eval(node)
+}
+
+// GetEnv returns the engine's environment.
+func (e *Engine) GetEnv() *Env {
+	return e.env
+}
+
+// --- SQL helpers (for backward compatibility) ---
 
 // QueryFields is the SELECT field list used by $pattern / $query.
 const QueryFields = "subject, predicate, object, meta"
 
 // PatternToTriple converts $pattern arguments into a triple slice.
-//
-//   ["$pattern", "$*", "author of", "$*"] -> ["author of"]
-//   ["$pattern", "Liu Xin", "author of", "$*"] -> ["Liu Xin", "author of", "$*"]
 func PatternToTriple(subject, predicate, object string) []string {
-	if subject == "$*" && object == "$*" {
-		return []string{predicate}
-	}
-	return []string{subject, predicate, object}
+	return functors.PatternToTriple(subject, predicate, object)
 }
 
 // TripleToSQLCondition builds a jsonb containment predicate.
 func TripleToSQLCondition(triple []string) (string, error) {
-	doc := map[string][]string{"triple": triple}
-	data, err := json.Marshal(doc)
-	if err != nil {
-		return "", err
-	}
-	s := string(data)
-	escaped := strings.ReplaceAll(s, "'", "''")
-	return fmt.Sprintf("meta @> '%s'", escaped), nil
+	return functors.TripleToSQLCondition(triple)
 }
-
-func evalPattern(evaluated []interface{}) (string, error) {
-	if len(evaluated) < 3 {
-		return "", fmt.Errorf("$pattern requires (subject, predicate, object)")
-	}
-	subj, ok1 := evaluated[0].(string)
-	pred, ok2 := evaluated[1].(string)
-	obj, ok3 := evaluated[2].(string)
-	if !ok1 || !ok2 || !ok3 {
-		return "", fmt.Errorf("$pattern requires string arguments")
-	}
-	triple := PatternToTriple(subj, pred, obj)
-	cond, err := TripleToSQLCondition(triple)
-	if err != nil {
-		return "", err
-	}
-	sql := fmt.Sprintf(
-		"select \n    subject, predicate, object, meta \nfrom statement as s \nwhere %s \noffset 0\nlimit 100 \n",
-		cond,
-	)
-	return sql, nil
-}
-
-func evalQuery(evaluated []interface{}) (string, error) {
-	if len(evaluated) < 2 {
-		return "", fmt.Errorf("$query expects [op, patterns array]")
-	}
-	list, ok := evaluated[1].([]interface{})
-	if !ok {
-		return "", fmt.Errorf("$query expects [op, patterns array]")
-	}
-	re, err := regexp.Compile(`(?is)where\s+(.+?)\s+offset`)
-	if err != nil {
-		return "", err
-	}
-	var conditions []string
-	for _, item := range list {
-		sql, ok := item.(string)
-		if !ok {
-			return "", fmt.Errorf("pattern must evaluate to SQL string")
-		}
-		m := re.FindStringSubmatch(sql)
-		if len(m) >= 2 {
-			conditions = append(conditions, fmt.Sprintf("(%s)", strings.TrimSpace(m[1])))
-		} else {
-			conditions = append(conditions, sql)
-		}
-	}
-	where := strings.Join(conditions, " and \n    ")
-	sql := fmt.Sprintf(
-		"select %s \nfrom statement \nwhere \n    %s \noffset 0\nlimit 100 \n",
-		QueryFields,
-		where,
-	)
-	return sql, nil
-}
-
