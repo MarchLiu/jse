@@ -1,6 +1,6 @@
 {
   "name": "jse-engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "JSE (JSON Structural Expression) TypeScript interpretation environment",
   "type": "module",
   "main": "dist/index.js",

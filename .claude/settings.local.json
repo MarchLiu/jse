@@ -15,7 +15,8 @@
       "Bash(npm run build:*)",
       "Bash(npm test:*)",
       "Bash(python -m pytest tests/test_query.py -v)",
-      "Bash(python -m pytest:*)"
+      "Bash(python -m pytest:*)",
+      "Bash(mvn test:*)"
     ]
   }
 }

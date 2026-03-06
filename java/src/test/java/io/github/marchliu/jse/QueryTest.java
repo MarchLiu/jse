@@ -1,22 +1,30 @@
 package io.github.marchliu.jse;
 
+import io.github.marchliu.jse.functors.SqlFunctors;
+import io.github.marchliu.jse.functors.UtilsFunctors;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static io.github.marchliu.jse.Sql.QUERY_FIELDS;
 
 class QueryTest {
 
+    private Engine createEngine() {
+        Env env = new Env();
+        env.load(UtilsFunctors.UTILS_FUNCTORS);
+        env.load(SqlFunctors.SQL_FUNCTORS);
+        return new Engine(env);
+    }
+
     @Test
     void basicQuery() {
+        Engine engine = createEngine();
         Map<String, Object> query = Map.of(
                 "$expr", List.of("$pattern", "$*", "author of", "$*")
         );
 
-        Engine engine = new Engine(new Env.ExpressionEnv());
         Object result = engine.execute(query);
         String sql = (String) result;
 
@@ -31,6 +39,7 @@ class QueryTest {
 
     @Test
     void combinedQuery() {
+        Engine engine = createEngine();
         Map<String, Object> query = Map.of(
                 "$query", List.of(
                         "$and",
@@ -41,16 +50,15 @@ class QueryTest {
                 )
         );
 
-        Engine engine = new Engine(new Env.ExpressionEnv());
-        String result = (String) engine.execute(query);
+        Object result = engine.execute(query);
+        String sql = (String) result;
 
-        assertTrue(result.contains("select " + QUERY_FIELDS));
-        assertTrue(result.contains("from statement"));
-        assertTrue(result.contains("Liu Xin"));
-        assertTrue(result.contains("author of"));
-        assertTrue(result.contains(" and "));
-        assertTrue(result.contains("offset 0"));
-        assertTrue(result.contains("limit 100"));
+        assertTrue(sql.contains("select " + SqlFunctors.QUERY_FIELDS));
+        assertTrue(sql.contains("from statement"));
+        assertTrue(sql.contains("Liu Xin"));
+        assertTrue(sql.contains("author of"));
+        assertTrue(sql.contains(" and "));
+        assertTrue(sql.contains("offset 0"));
+        assertTrue(sql.contains("limit 100"));
     }
 }
-
