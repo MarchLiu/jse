@@ -18,15 +18,15 @@ fn pattern(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   }
 
   let subject = match args[0] {
-    JseValue::String(s) => s
+    JseValue::StringValue(s) => s
     _ => return Err("$pattern requires string arguments")
   }
   let predicate = match args[1] {
-    JseValue::String(s) => s
+    JseValue::StringValue(s) => s
     _ => return Err("$pattern requires string arguments")
   }
   let object = match args[2] {
-    JseValue::String(s) => s
+    JseValue::StringValue(s) => s
     _ => return Err("$pattern requires string arguments")
   }
 
@@ -34,7 +34,7 @@ fn pattern(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   match triple_to_sql_condition(triple) {
     Ok(cond) => {
       let sql = "select \n    subject, predicate, object, meta \nfrom statement as s \nwhere " + cond + " \noffset 0\nlimit 100 \n"
-      Ok(JseValue::String(sql))
+      Ok(JseValue::StringValue(sql))
     }
     Err(e) => Err(e)
   }
@@ -49,7 +49,7 @@ fn query(env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   let raw_value = args[0]
 
   match raw_value {
-    JseValue::Array(arr) => {
+    JseValue::ArrayValue(arr) => {
       // Extract patterns array
       let patterns = extract_patterns(arr)
 
@@ -60,7 +60,7 @@ fn query(env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
         match eval_json(env, pattern) {
           Ok(result) => {
             match result {
-              JseValue::String(sql_str) => {
+              JseValue::StringValue(sql_str) => {
                 let cond = extract_where_clause(sql_str)
                 conditions2 = array_push(conditions2, cond)
               }
@@ -73,7 +73,7 @@ fn query(env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
 
       let where_clause = conditions2.join(" and \n    ")
       let sql = "select " + QUERY_FIELDS + " \nfrom statement \nwhere \n    " + where_clause + " \noffset 0\nlimit 100 \n"
-      Ok(JseValue::String(sql))
+      Ok(JseValue::StringValue(sql))
     }
     _ => Err("$query expects an array argument")
   }
@@ -81,7 +81,7 @@ fn query(env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
 
 fn expr(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   if args.is_empty() {
-    return Ok(JseValue::Null)
+    return Ok(JseValue::NullValue)
   }
   Ok(args[0])
 }
@@ -94,10 +94,10 @@ fn extract_patterns(arr : Array[JseValue]) -> Array[JseValue] {
   }
 
   match arr.get(0) {
-    Some(JseValue::String(op)) if op == "$and" || op == "$or" => {
+    Some(JseValue::StringValue(op)) if op == "$and" || op == "$or" => {
       // This is [op, patterns] format
       match arr.get(1) {
-        Some(JseValue::Array(patterns)) => patterns
+        Some(JseValue::ArrayValue(patterns)) => patterns
         _ => arr
       }
     }
@@ -184,12 +184,12 @@ fn triple_to_sql_condition(triple : Array[String]) -> Result[String, String] {
   let arr = Array::new()
   let mut arr2 = arr
   for s in triple {
-    arr2 = array_push(arr2, JseValue::String(s))
+    arr2 = array_push(arr2, JseValue::StringValue(s))
   }
-  doc2 = map_put(doc2, "triple", JseValue::Array(arr2))
+  doc2 = map_put(doc2, "triple", JseValue::ArrayValue(arr2))
 
   // Convert to JSON string
-  let json_str = match json_to_string(JseValue::Object(doc2)) {
+  let json_str = match json_to_string(JseValue::ObjectValue(doc2)) {
     Ok(s) => s
     Err(e) => return Err(e)
   }
@@ -214,12 +214,12 @@ fn triple_to_sql_condition(triple : Array[String]) -> Result[String, String] {
 /// Simple JSON to string conversion
 fn json_to_string(value : JseValue) -> Result[String, String] {
   match value {
-    JseValue::Null => Ok("null")
-    JseValue::Bool(true) => Ok("true")
-    JseValue::Bool(false) => Ok("false")
-    JseValue::Number(n) => Ok(n.to_string())
-    JseValue::String(s) => Ok("\"" + s + "\"")
-    JseValue::Array(arr) => {
+    JseValue::NullValue => Ok("null")
+    JseValue::BoolValue(true) => Ok("true")
+    JseValue::BoolValue(false) => Ok("false")
+    JseValue::NumberValue(n) => Ok(n.to_string())
+    JseValue::StringValue(s) => Ok("\"" + s + "\"")
+    JseValue::ArrayValue(arr) => {
       let mut result = "["
       let mut first = true
       for elem in arr {
@@ -235,7 +235,7 @@ fn json_to_string(value : JseValue) -> Result[String, String] {
       result = result + "]"
       Ok(result)
     }
-    JseValue::Object(obj) => {
+    JseValue::ObjectValue(obj) => {
       let mut result = "{"
       let mut first = true
       let keys = obj.keys()

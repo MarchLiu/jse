@@ -70,6 +70,6 @@ pub fn Engine::get_env(self : Engine) -> Env {
 pub fn eval(expr : JseValue) -> JseValue {
   match with_default_env().execute(expr) {
     Ok(v) => v
-    Err(_) => JseValue::Null
+    Err(_) => JseValue::NullValue
   }
 }

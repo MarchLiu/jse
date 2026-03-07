@@ -13,15 +13,15 @@ pub fn parser_new(env : Env) -> Parser {
 /// Parse a JSON value into an AST node
 pub fn Parser::parse(self : Parser, value : JseValue) -> Result[AstNodeEnum, AstError] {
   match value {
-    JseValue::Null | JseValue::Bool(_) | JseValue::Number(_) | JseValue::String(_) => {
+    JseValue::NullValue | JseValue::BoolValue(_) | JseValue::NumberValue(_) | JseValue::StringValue(_) => {
       Ok(AstNodeEnum::Literal(literal_new(value, self.env)))
     }
 
-    JseValue::Array(arr) => {
+    JseValue::ArrayValue(arr) => {
       Parser::parse_array(self, arr)
     }
 
-    JseValue::Object(obj) => {
+    JseValue::ObjectValue(obj) => {
       Parser::parse_object(self, obj)
     }
   }
@@ -45,7 +45,7 @@ fn Parser::parse_object(self : Parser, obj : Map[String, JseValue]) -> Result[As
     Some(sym) => {
       let value = match obj.get(sym) {
         Some(v) => v
-        None => JseValue::Null
+        None => JseValue::NullValue
       }
 
       match Parser::parse(self, value) {

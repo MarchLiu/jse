@@ -46,7 +46,7 @@ pub fn symbol_apply(node : SymbolNode, env : Env) -> Result[JseValue, AstError] 
 }
 
 pub fn symbol_to_json(node : SymbolNode) -> JseValue {
-  JseValue::String(node.name)
+  JseValue::StringValue(node.name)
 }
 
 pub fn symbol_is_symbol_named(node : SymbolNode, name : String) -> Bool {
@@ -77,7 +77,7 @@ pub fn array_get_env(node : ArrayNode) -> Env {
 
 pub fn array_apply(node : ArrayNode, env : Env) -> Result[JseValue, AstError] {
   if node.elements.is_empty() {
-    return Ok(JseValue::Array(Array::new()))
+    return Ok(JseValue::ArrayValue(Array::new()))
   }
 
   let first = node.elements[0]
@@ -100,7 +100,7 @@ pub fn array_to_json(node : ArrayNode) -> JseValue {
   for elem in node.elements {
     arr2 = array_push(arr2, ast_node_enum_to_json(elem))
   }
-  JseValue::Array(arr2)
+  JseValue::ArrayValue(arr2)
 }
 
 pub fn array_is_symbol_named(node : ArrayNode, name : String) -> Bool {
@@ -149,7 +149,7 @@ fn array_apply_regular(node : ArrayNode, env : Env) -> Result[JseValue, AstError
       Err(e) => return Err(e)
     }
   }
-  Ok(JseValue::Array(result2))
+  Ok(JseValue::ArrayValue(result2))
 }
 
 fn array_rest(node : ArrayNode) -> Array[AstNodeEnum] {
@@ -203,7 +203,7 @@ pub fn object_apply(node : ObjectNode, env : Env) -> Result[JseValue, AstError] 
       None => ()
     }
   }
-  Ok(JseValue::Object(result2))
+  Ok(JseValue::ObjectValue(result2))
 }
 
 pub fn object_to_json(node : ObjectNode) -> JseValue {
@@ -216,7 +216,7 @@ pub fn object_to_json(node : ObjectNode) -> JseValue {
       None => ()
     }
   }
-  JseValue::Object(result2)
+  JseValue::ObjectValue(result2)
 }
 
 /// Object expression node ({"$operator": value})
@@ -259,7 +259,7 @@ pub fn object_expression_apply(node : ObjectExpressionNode, env : Env) -> Result
 pub fn object_expression_to_json(node : ObjectExpressionNode) -> JseValue {
   let obj = Map::new()
   let obj2 = map_put(obj, node.operator, ast_node_enum_to_json(node.value))
-  JseValue::Object(obj2)
+  JseValue::ObjectValue(obj2)
 }
 
 fn object_expression_apply_functor(env : Env, symbol : String, args : Array[JseValue]) -> Result[JseValue, AstError] {
@@ -308,19 +308,19 @@ pub fn lambda_get_env(node : LambdaNode) -> Env {
 
 pub fn lambda_apply(node : LambdaNode, _env : Env) -> Result[JseValue, AstError] {
   let obj = Map::new()
-  let mut obj2 = map_put(obj, "__lambda__", JseValue::Bool(true))
+  let mut obj2 = map_put(obj, "__lambda__", JseValue::BoolValue(true))
   let params_array = Array::new()
   let mut params_array2 = params_array
   for param in node.params {
-    params_array2 = array_push(params_array2, JseValue::String(param))
+    params_array2 = array_push(params_array2, JseValue::StringValue(param))
   }
-  obj2 = map_put(obj2, "params", JseValue::Array(params_array2))
+  obj2 = map_put(obj2, "params", JseValue::ArrayValue(params_array2))
   obj2 = map_put(obj2, "body", ast_node_enum_to_json(node.body))
-  Ok(JseValue::Object(obj2))
+  Ok(JseValue::ObjectValue(obj2))
 }
 
 pub fn lambda_to_json(_node : LambdaNode) -> JseValue {
-  JseValue::String("<lambda>")
+  JseValue::StringValue("<lambda>")
 }
 
 /// Helper functions for working with AstNodeEnum

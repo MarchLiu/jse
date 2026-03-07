@@ -34,13 +34,13 @@ pub fn builtin_functors() -> Map[String, Functor] {
 fn quote(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   match args.get(0) {
     Some(v) => Ok(v)
-    None => Ok(JseValue::Null)
+    None => Ok(JseValue::NullValue)
   }
 }
 
 fn eq(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   if args.length() < 2 {
-    return Ok(JseValue::Bool(false))
+    return Ok(JseValue::BoolValue(false))
   }
 
   let first = args[0]
@@ -60,7 +60,7 @@ fn cond(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   let mut i = 0
   while i < args.length() - 1 {
     match args[i] {
-      JseValue::Bool(b) => {
+      JseValue::BoolValue(b) => {
         if b {
           return Ok(args[i + 1])
         }
@@ -75,7 +75,7 @@ fn cond(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
     return Ok(args[args.length() - 1])
   }
 
-  Ok(JseValue::Null)
+  Ok(JseValue::NullValue)
 }
 
 fn head(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
@@ -84,9 +84,9 @@ fn head(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   }
 
   match args[0] {
-    JseValue::Array(arr) => {
+    JseValue::ArrayValue(arr) => {
       if arr.is_empty() {
-        Ok(JseValue::Null)
+        Ok(JseValue::NullValue)
       } else {
         Ok(arr[0])
       }
@@ -101,12 +101,12 @@ fn tail(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   }
 
   match args[0] {
-    JseValue::Array(arr) => {
+    JseValue::ArrayValue(arr) => {
       if arr.is_empty() {
-        return Ok(JseValue::Array(Array::new()))
+        return Ok(JseValue::ArrayValue(Array::new()))
       }
       if arr.length() == 1 {
-        return Ok(JseValue::Array(Array::new()))
+        return Ok(JseValue::ArrayValue(Array::new()))
       }
       let len = arr.length()
       let result = Array::new()
@@ -116,7 +116,7 @@ fn tail(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
         result2 = array_push(result2, arr[i])
         i = i + 1
       }
-      Ok(JseValue::Array(result2))
+      Ok(JseValue::ArrayValue(result2))
     }
     _ => Err("$tail argument must be an array")
   }
@@ -124,12 +124,12 @@ fn tail(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
 
 fn atom_p(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   if args.is_empty() {
-    return Ok(JseValue::Bool(true))
+    return Ok(JseValue::BoolValue(true))
   }
 
   match args[0] {
-    JseValue::Array(_) | JseValue::Object(_) => Ok(JseValue::Bool(false))
-    _ => Ok(JseValue::Bool(true))
+    JseValue::ArrayValue(_) | JseValue::ObjectValue(_) => Ok(JseValue::BoolValue(false))
+    _ => Ok(JseValue::BoolValue(true))
   }
 }
 
@@ -139,13 +139,13 @@ fn cons(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   }
 
   match args[1] {
-    JseValue::Array(arr) => {
+    JseValue::ArrayValue(arr) => {
       let result = Array::new()
       let mut result2 = array_push(result, args[0])
       for elem in arr {
         result2 = array_push(result2, elem)
       }
-      Ok(JseValue::Array(result2))
+      Ok(JseValue::ArrayValue(result2))
     }
     _ => Err("$cons second argument must be an array")
   }
@@ -154,11 +154,11 @@ fn cons(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
 /// Helper function for equality check
 fn is_equal(a : JseValue, b : JseValue) -> Bool {
   match (a, b) {
-    (JseValue::Bool(x), JseValue::Bool(y)) => x == y
-    (JseValue::Null, JseValue::Null) => true
-    (JseValue::Number(x), JseValue::Number(y)) => x == y
-    (JseValue::String(x), JseValue::String(y)) => x == y
-    (JseValue::Array(x), JseValue::Array(y)) => {
+    (JseValue::BoolValue(x), JseValue::BoolValue(y)) => x == y
+    (JseValue::NullValue, JseValue::NullValue) => true
+    (JseValue::NumberValue(x), JseValue::NumberValue(y)) => x == y
+    (JseValue::StringValue(x), JseValue::StringValue(y)) => x == y
+    (JseValue::ArrayValue(x), JseValue::ArrayValue(y)) => {
       if x.length() != y.length() {
         return false
       }
@@ -173,7 +173,7 @@ fn is_equal(a : JseValue, b : JseValue) -> Bool {
       }
       result
     }
-    (JseValue::Object(x), JseValue::Object(y)) => {
+    (JseValue::ObjectValue(x), JseValue::ObjectValue(y)) => {
       let x_keys = x.keys()
       let y_keys = y.keys()
       let x_arr = x_keys.to_array()

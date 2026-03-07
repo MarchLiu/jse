@@ -18,7 +18,7 @@ pub fn utils_functors() -> Map[String, Functor] {
 
 fn not(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   if args.is_empty() {
-    return Ok(JseValue::Bool(true))
+    return Ok(JseValue::BoolValue(true))
   }
   let b = to_bool(args[0])
   Ok(to_json_bool(!b))
@@ -26,31 +26,31 @@ fn not(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
 
 fn list_p(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   if args.is_empty() {
-    return Ok(JseValue::Bool(false))
+    return Ok(JseValue::BoolValue(false))
   }
   match args[0] {
-    JseValue::Array(_) => Ok(JseValue::Bool(true))
-    _ => Ok(JseValue::Bool(false))
+    JseValue::ArrayValue(_) => Ok(JseValue::BoolValue(true))
+    _ => Ok(JseValue::BoolValue(false))
   }
 }
 
 fn map_p(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   if args.is_empty() {
-    return Ok(JseValue::Bool(false))
+    return Ok(JseValue::BoolValue(false))
   }
   match args[0] {
-    JseValue::Object(_) => Ok(JseValue::Bool(true))
-    _ => Ok(JseValue::Bool(false))
+    JseValue::ObjectValue(_) => Ok(JseValue::BoolValue(true))
+    _ => Ok(JseValue::BoolValue(false))
   }
 }
 
 fn null_p(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   if args.is_empty() {
-    return Ok(JseValue::Bool(true))
+    return Ok(JseValue::BoolValue(true))
   }
   match args[0] {
-    Null => Ok(JseValue::Bool(true))
-    _ => Ok(JseValue::Bool(false))
+    JseValue::NullValue => Ok(JseValue::BoolValue(true))
+    _ => Ok(JseValue::BoolValue(false))
   }
 }
 
@@ -60,12 +60,12 @@ fn get(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   }
 
   match args[0] {
-    Object(obj) => {
+    JseValue::ObjectValue(obj) => {
       match args[1] {
-        String(key) => {
+        JseValue::StringValue(key) => {
           match obj.get(key) {
             Some(v) => Ok(v)
-            None => Ok(Null)
+            None => Ok(JseValue::NullValue)
           }
         }
         _ => Err("$get second argument must be a string")
@@ -81,9 +81,9 @@ fn set_fn(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   }
 
   match args[0] {
-    JseValue::Object(obj) => {
+    JseValue::ObjectValue(obj) => {
       match args[1] {
-        JseValue::String(key) => {
+        JseValue::StringValue(key) => {
           // Note: In MoonBit, Map is immutable, so we need to create a new map
           let result = Map::new()
           let mut result2 = result
@@ -95,7 +95,7 @@ fn set_fn(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
             }
           }
           result2 = map_put(result2, key, args[2])
-          Ok(JseValue::Object(result2))
+          Ok(JseValue::ObjectValue(result2))
         }
         _ => Err("$set second argument must be a string")
       }
@@ -110,9 +110,9 @@ fn del(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   }
 
   match args[0] {
-    Object(obj) => {
+    JseValue::ObjectValue(obj) => {
       match args[1] {
-        String(key) => {
+        JseValue::StringValue(key) => {
           // Note: In MoonBit, Map is immutable, so we need to create a new map
           let result = Map::new()
           let mut result2 = result
@@ -125,7 +125,7 @@ fn del(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
               }
             }
           }
-          Ok(Object(result2))
+          Ok(JseValue::ObjectValue(result2))
         }
         _ => Err("$del second argument must be a string")
       }
@@ -140,9 +140,9 @@ fn conj(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   }
 
   match args[0] {
-    Object(obj) => {
+    JseValue::ObjectValue(obj) => {
       match args[1] {
-        String(key) => {
+        JseValue::StringValue(key) => {
           // Note: In MoonBit, Map is immutable, so we need to create a new map
           let result = Map::new()
           let mut result2 = result
@@ -154,7 +154,7 @@ fn conj(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
             }
           }
           result2 = map_put(result2, key, args[2])
-          Ok(Object(result2))
+          Ok(JseValue::ObjectValue(result2))
         }
         _ => Err("$conj second argument must be a string")
       }
@@ -166,31 +166,31 @@ fn conj(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
 fn and_fn(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   for v in args {
     if !to_bool(v) {
-      return Ok(JseValue::Bool(false))
+      return Ok(JseValue::BoolValue(false))
     }
   }
-  Ok(JseValue::Bool(true))
+  Ok(JseValue::BoolValue(true))
 }
 
 fn or_fn(_env : Env, args : Array[JseValue]) -> Result[JseValue, String] {
   for v in args {
     if to_bool(v) {
-      return Ok(JseValue::Bool(true))
+      return Ok(JseValue::BoolValue(true))
     }
   }
-  Ok(JseValue::Bool(false))
+  Ok(JseValue::BoolValue(false))
 }
 
 /// Convert JSON value to boolean
 fn to_bool(v : JseValue) -> Bool {
   match v {
-    JseValue::Bool(b) => b
-    JseValue::Null => false
+    JseValue::BoolValue(b) => b
+    JseValue::NullValue => false
     _ => true
   }
 }
 
 /// Convert bool to JSON boolean
 fn to_json_bool(b : Bool) -> JseValue {
-  if b { JseValue::Bool(true) } else { JseValue::Bool(false) }
+  if b { JseValue::BoolValue(true) } else { JseValue::BoolValue(false) }
 }

@@ -8,12 +8,12 @@
 
 /// Value type for JSE expressions - local enum to avoid std json complications
 pub enum JseValue {
-  Null
-  Bool(Bool)
-  Number(Int)
-  String(String)
-  Array(Array[JseValue])
-  Object(Map[String, JseValue])
+  NullValue
+  BoolValue(Bool)
+  NumberValue(Int)
+  StringValue(String)
+  ArrayValue(Array[JseValue])
+  ObjectValue(Map[String, JseValue])
 }
 
 /// Functor type - a function that takes environment and arguments
@@ -125,7 +125,7 @@ pub fn apply_functor(env : Env, name : String, args : Array[JseValue]) -> Result
 pub fn eval_json(env : Env, expr : JseValue) -> Result[JseValue, String] {
   // For primitive values, return as-is
   match expr {
-    JseValue::Null | JseValue::Bool(_) | JseValue::Number(_) | JseValue::String(_) => Ok(expr)
+    JseValue::NullValue | JseValue::BoolValue(_) | JseValue::NumberValue(_) | JseValue::StringValue(_) => Ok(expr)
     _ => {
       // For complex values, we need to parse and evaluate
       // This will be implemented with the parser
