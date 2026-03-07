@@ -7,7 +7,7 @@ Go implementation of JSE (JSON Structural Expression), consistent with the Pytho
 In your `go.mod`:
 
 ```bash
-go get github.com/MarchLiu/jse/gojse@v0.1.0
+go get github.com/MarchLiu/jse/gojse@v0.2.0
 ```
 
 Then import:
