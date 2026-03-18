@@ -210,3 +210,6 @@ moonbit/_build/
 .bloop/
 .claude/settings.local.json
 .metals/
+
+# Node.js
+node_modules/
