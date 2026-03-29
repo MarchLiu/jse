@@ -210,6 +210,10 @@ moonbit/_build/
 .bloop/
 .claude/settings.local.json
 .metals/
+<<<<<<< HEAD
 
 # Node.js
 node_modules/
+=======
+moonbit/_build/
+>>>>>>> 8c89186 (project clean)
