@@ -173,14 +173,16 @@ parse(number) = number
 parse(s) =
     if s 以 "$$" 开头:
         unescape(s)
+    else if isSymbol(s) ∧ s ≠ "$*":
+        Symbol(s)
     else:
         s
 ```
 
 注意：
 
-字符串本身不直接成为 Symbol；
-Symbol 只在数组首位或对象 key 位置参与表达式判定。
+`$*` 保持为通配字面量，不作为 Symbol；
+其他以 `$` 开头且非 `$$` 的字符串可解析为 Symbol。
 
 ---
 

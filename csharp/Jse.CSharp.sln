@@ -1,0 +1,27 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jse", "Jse/Jse.csproj", "{0E7A6A24-6CE8-4AD3-86CC-84823F173B79}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jse.Tests", "Jse.Tests/Jse.Tests.csproj", "{F0CCF08C-0FDD-4B10-98A9-8685DD7AD5AD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0E7A6A24-6CE8-4AD3-86CC-84823F173B79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E7A6A24-6CE8-4AD3-86CC-84823F173B79}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E7A6A24-6CE8-4AD3-86CC-84823F173B79}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E7A6A24-6CE8-4AD3-86CC-84823F173B79}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0CCF08C-0FDD-4B10-98A9-8685DD7AD5AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0CCF08C-0FDD-4B10-98A9-8685DD7AD5AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0CCF08C-0FDD-4B10-98A9-8685DD7AD5AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0CCF08C-0FDD-4B10-98A9-8685DD7AD5AD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

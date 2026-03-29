@@ -1,0 +1,110 @@
+# .NET / Visual Studio comprehensive ignore
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio cache and settings
+.vs/
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+TestResults/
+
+# MSTest
+[Tt]est[Rr]esult.xml
+[Tt]est[Rr]esult.trx
+
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# .NET CLI
+*.cache
+*.pdb
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code local workspace files for this folder
+.vscode/
+
+# DotCover
+*.dotCover
+
+# NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# Coverlet and coverage outputs
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+
+# SQL Server files
+*.mdf
+*.ldf
+
+# Local DB files
+*.dbmdl
+
+# Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# Diagnostics
+*.dmp
+*.dump
+
+# Generated files
+Generated\ Files/
+
+# Paket
+.paket/paket.exe
+paket-files/
+
+# FAKE
+.fake/
+
+# Local history for Visual Studio
+.localhistory/
+
+# Misc
+*.tmp
+*.temp
+*.log
