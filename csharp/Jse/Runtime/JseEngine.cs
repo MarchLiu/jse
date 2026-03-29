@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Jse.Ast;
 using Jse.Execution;
 using Jse.Serialization;
 
@@ -33,10 +34,22 @@ public sealed class JseEngine
         return ExecuteCore(element);
     }
 
+    // AST entry point for already-parsed expressions.
+    public object? Execute(JseNode ast)
+    {
+        ArgumentNullException.ThrowIfNull(ast);
+        return ExecuteCore(ast);
+    }
+
     // Single execution pipeline: parse node -> compile -> execute.
     private object? ExecuteCore(JsonElement element)
     {
         var ast = JseRuntimeSerializer.DeserializeNode(element);
+        return ExecuteCore(ast);
+    }
+
+    private object? ExecuteCore(JseNode ast)
+    {
         var executable = _compiler.Compile(ast, _environment);
         return executable();
     }

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Data;
 using System.Data.SqlClient;
+using Jse.Ast;
 using Jse.Runtime;
 using Jse.Runtime.Functors;
 using Xunit;
@@ -114,6 +115,19 @@ public class JseEngineTests
         using var doc = JsonDocument.Parse("[\"$eq\", 1, 1]");
         var result = _engine.Execute(doc.RootElement);
         Assert.Equal(true, result);
+    }
+
+    [Fact]
+    public void Execute_WithJseNodeInput_Works()
+    {
+        var ast = new JseCall("add", new JseNode[]
+        {
+            new JseLiteral(1m),
+            new JseLiteral(2m)
+        });
+
+        var result = _engine.Execute(ast);
+        Assert.Equal(3.JsonValue(), result);
     }
 
     [Fact]
