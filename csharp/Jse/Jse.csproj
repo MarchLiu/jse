@@ -4,9 +4,30 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>12.0</LangVersion>
+
+    <!-- NuGet 包元数据 -->
+    <PackageId>Jse4n</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>marsliu</Authors>
+    <Description>JSE (JSON Structural Expression) runtime for .NET - a Lisp-like expression evaluator on JSON</Description>
+    <PackageTags>jse;json;s-expression;lisp;evaluator</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/MarchLiu/jse</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/MarchLiu/jse</PackageProjectUrl>
+
+    <!-- 符号包 -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- 源码链接 -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
   </ItemGroup>
 </Project>
