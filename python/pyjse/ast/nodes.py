@@ -166,6 +166,12 @@ class ExpressionNode(AstNode):
 
             if self._operator == "$quote":
                 return self._value
+            elif self._operator == "$sql":
+                # $sql receives raw JSON (stored in LiteralNode by parser)
+                if isinstance(self._value, LiteralNode):
+                    args = [self._value._value]
+                else:
+                    args = [self._value]
             elif self._operator == "$expr":
                 # $expr evaluates the whole expression and returns the result
                 args = [env.eval(self._value)]

@@ -170,6 +170,17 @@ class Parser:
                 value = d[operator]
                 return QuoteNode(value, self._env)
 
+            # Special case: $sql — pass raw JSON value directly
+            # (bypasses JSE parsing to preserve $keys in nested objects)
+            if operator == "$sql":
+                raw_value = d[operator]
+                metadata = {}
+                for k, v in d.items():
+                    if k != operator:
+                        parsed_key = _unescape(k) if isinstance(k, str) else k
+                        metadata[parsed_key] = v  # raw value for metadata too
+                return ExpressionNode(operator, LiteralNode(raw_value, self._env), metadata, self._env)
+
             # Parse the value
             parsed_value = self.parse(d[operator])
 
