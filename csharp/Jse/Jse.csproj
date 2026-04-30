@@ -7,7 +7,7 @@
 
     <!-- NuGet 包元数据 -->
     <PackageId>Jse4n</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.4</Version>
     <Authors>marsliu</Authors>
     <Description>JSE (JSON Structural Expression) runtime for .NET - a Lisp-like expression evaluator on JSON</Description>
     <PackageTags>jse;json;s-expression;lisp;evaluator</PackageTags>

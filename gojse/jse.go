@@ -7,6 +7,9 @@ import (
 	"github.com/MarchLiu/jse/gojse/functors"
 )
 
+// Version is the current version of the gojse library.
+const Version = "0.2.4"
+
 // Value is the generic JSON value type used by the engine.
 type Value = interface{}
 

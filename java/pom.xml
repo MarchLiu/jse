@@ -6,7 +6,7 @@
 
     <groupId>io.github.marchliu</groupId>
     <artifactId>jse4j</artifactId>
-    <version>0.2.3</version>
+    <version>0.2.4</version>
     <packaging>jar</packaging>
     <name>io.github.marchliu:jse4j</name>
 
