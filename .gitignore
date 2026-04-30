@@ -15,6 +15,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!ruby/lib/
 lib64/
 parts/
 sdist/
@@ -216,3 +217,4 @@ node_modules/
 
 # Zig (local build cache under zigjse/)
 zigjse/.zig-cache/
+ruby/jse4r-0.2.4.gem
