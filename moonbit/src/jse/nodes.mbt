@@ -244,7 +244,7 @@ pub fn object_expression_apply(node : ObjectExpressionNode, env : Env) -> Result
   set_meta(env, node.metadata)
 
   let result = {
-    if node.operator == "$pattern" || node.operator == "$query" {
+    if node.operator == "$pattern" || node.operator == "$query" || node.operator == "$sql" {
       let json_value = ast_node_enum_to_json(node.value)
       let args = Array::new()
       let args2 = array_push(args, json_value)

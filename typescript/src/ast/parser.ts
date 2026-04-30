@@ -141,6 +141,17 @@ export class Parser {
         return new QuoteNode(d[operator], this._env);
       }
 
+      // Special case: $sql — pass raw JSON directly
+      if (operator === "$sql") {
+        const metadata: Record<string, JseValue> = {};
+        for (const [k, v] of Object.entries(d)) {
+          if (k !== operator) {
+            metadata[unescape(k)] = v;
+          }
+        }
+        return new ObjectExpressionNode(operator, new LiteralNode(d[operator], this._env), metadata, this._env);
+      }
+
       // Parse the value
       const parsedValue = this.parse(d[operator]);
 

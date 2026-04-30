@@ -253,7 +253,7 @@ impl AstNode for ObjectExpressionNode {
             env_mut.set_meta(self.metadata.clone());
         }
 
-        let result = if self.operator == "$pattern" || self.operator == "$query" {
+        let result = if self.operator == "$pattern" || self.operator == "$query" || self.operator == "$sql" {
             // Special handling for $pattern and $query
             // Pass unevaluated JSON for these operators
             let json_value = self.value.to_json();

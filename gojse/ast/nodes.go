@@ -212,8 +212,8 @@ func (n *ObjectExpressionNode) Apply(env interface{}) (interface{}, error) {
 
 	var result interface{}
 	var resultErr error
-	if n.operator == "$pattern" || n.operator == "$query" {
-		// Special handling for $pattern and $query - pass unevaluated JSON
+	if n.operator == "$pattern" || n.operator == "$query" || n.operator == "$sql" {
+		// Special handling for $pattern, $query, $sql - pass unevaluated JSON
 		jsonValue := n.value.ToJSON()
 		result, resultErr = n.applyFunctor(env, n.operator, []interface{}{jsonValue})
 	} else {

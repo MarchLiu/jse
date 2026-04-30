@@ -50,3 +50,48 @@ fn combined_query() {
     assert!(sql.contains("offset 0"));
     assert!(sql.contains("limit 100"));
 }
+
+#[test]
+fn sql_select_from() {
+    let engine = engine_with_sql();
+    let expr = serde_json::json!({"$sql": [["$select","$name","$age"],["$from","$users"]]});
+    let result = engine.execute(&expr).unwrap();
+    let sql = result.as_str().unwrap();
+    assert!(sql.contains("select name, age"));
+    assert!(sql.contains("from users"));
+}
+
+#[test]
+fn sql_nested_and_or() {
+    let engine = engine_with_sql();
+    let expr = serde_json::json!({"$sql": [
+        ["$select","$name","$age"],
+        ["$from","$users"],
+        ["$where",["$and",
+            ["$gt","$age",18],
+            ["$or",["$eq","$status","active"],["$eq","$role","admin"]]]]
+    ]});
+    let sql = engine.execute(&expr).unwrap().as_str().unwrap().to_string();
+    assert!(sql.contains("age > 18"));
+    assert!(sql.contains("status = 'active'"));
+}
+
+#[test]
+fn sql_join_alias() {
+    let engine = engine_with_sql();
+    let expr = serde_json::json!({"$sql": [
+        ["$select","$u.name","$o.total"],
+        ["$from",["$as","$users","$u"]],
+        ["$join",["$as","$orders","$o"],["$eq","$u.id","$o.user_id"]],
+        ["$where",["$gt","$o.total",100]]
+    ]});
+    let sql = engine.execute(&expr).unwrap().as_str().unwrap().to_string();
+    assert!(sql.contains("users as u"));
+    assert!(sql.contains("join orders as o"));
+}
+
+fn engine_with_sql() -> jse::Engine {
+    let env = std::rc::Rc::new(std::cell::RefCell::new(jse::Env::new()));
+    env.borrow_mut().load(&jse::functors::sql::sql_functors());
+    jse::Engine::new(env)
+}

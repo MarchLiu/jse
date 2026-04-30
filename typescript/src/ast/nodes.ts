@@ -180,6 +180,13 @@ export class ObjectExpressionNode extends AstNode {
     if (this._operator === "$expr") {
       // $expr evaluates the whole expression and returns the result
       args = [env.eval(this._value)];
+    } else if (this._operator === "$sql") {
+      // $sql receives raw JSON (stored in LiteralNode by parser)
+      if (this._value instanceof LiteralNode) {
+        args = [(this._value as LiteralNode).value];
+      } else {
+        args = [this._value];
+      }
     } else if (this._value instanceof ArrayNode) {
       // Get the elements of the array node
       const elements = this._value.elements;

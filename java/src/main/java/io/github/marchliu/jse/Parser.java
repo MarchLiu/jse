@@ -144,6 +144,18 @@ public class Parser {
                 return new QuoteNode(dict.get(operator), env);
             }
 
+            // Special case: $sql - pass raw JSON directly
+            if ("$sql".equals(operator)) {
+                Map<String, Object> meta = new LinkedHashMap<>();
+                for (Map.Entry<String, Object> entry : dict.entrySet()) {
+                    if (!entry.getKey().equals(operator)) {
+                        meta.put(unescape(entry.getKey()), entry.getValue());
+                    }
+                }
+                return new ObjectExpressionNode(operator, new LiteralNode(dict.get(operator), env), meta, env);
+            }
+
+
             // Parse the value
             Object parsedValue = parse(dict.get(operator));
 

@@ -187,6 +187,7 @@ public sealed class OperatorRegistry
         registry.RegisterSpecialExpression("def", (context, args) => LispFunctors.Def(context, args));
         registry.RegisterSpecialExpression("defn", (context, args) => (object?)LispFunctors.Defn(context, args));
         registry.RegisterSpecialExpression("query", (context, args) => (object?)SqlFunctors.Query(context, args));  //need configure default sql connection ? 
+        registry.RegisterSpecialExpression("sql", (context, args) => (object?)SqlFunctors.Sql(context, args));
 
         return registry;
     }

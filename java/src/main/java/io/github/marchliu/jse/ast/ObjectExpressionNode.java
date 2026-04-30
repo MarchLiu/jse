@@ -78,6 +78,13 @@ public final class ObjectExpressionNode extends AstNode {
         if ("$expr".equals(operator)) {
             // $expr evaluates the whole expression and returns the result
             args = new Object[]{callEnv.eval(value)};
+        } else if ("$sql".equals(operator)) {
+            // $sql receives raw JSON (stored in LiteralNode by parser)
+            if (value instanceof LiteralNode lit) {
+                args = new Object[]{lit.value()};
+            } else {
+                args = new Object[]{value};
+            }
         } else if (value instanceof ArrayNode arrayNode) {
             // Get the elements of the array node and deep evaluate them
             List<Object> elements = arrayNode.elements();

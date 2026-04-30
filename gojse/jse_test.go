@@ -174,3 +174,180 @@ func TestQueryCombined(t *testing.T) {
 		t.Fatalf("sql does not contain expected substrings: %q", sql)
 	}
 }
+
+func unmarshalExecute(t *testing.T, e *Engine, rawJSON string) string {
+	t.Helper()
+	var expr map[string]interface{}
+	if err := json.Unmarshal([]byte(rawJSON), &expr); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	v, err := e.Execute(expr)
+	if err != nil {
+		t.Fatalf("execute error: %v", err)
+	}
+	sql, ok := v.(string)
+	if !ok {
+		t.Fatalf("expected string sql, got %#v", v)
+	}
+	return sql
+}
+
+func TestSqlSelectFrom(t *testing.T) {
+	e := newEngineWithSQL()
+	sql := unmarshalExecute(t, e, `{
+		"$sql": [["$select","$name","$age"],["$from","$users"]]
+	}`)
+	if !strings.Contains(sql, "select name, age") || !strings.Contains(sql, "from users") {
+		t.Fatalf("unexpected sql: %q", sql)
+	}
+}
+
+func TestSqlNestedAndOr(t *testing.T) {
+	e := newEngineWithSQL()
+	sql := unmarshalExecute(t, e, `{
+		"$sql": [
+			["$select","$name","$age"],
+			["$from","$users"],
+			["$where",["$and",
+				["$gt","$age",18],
+				["$or",["$eq","$status","active"],["$eq","$role","admin"]]]]
+		]
+	}`)
+	if !strings.Contains(sql, "age > 18") ||
+		!strings.Contains(sql, "status = 'active'") ||
+		!strings.Contains(sql, "role = 'admin'") {
+		t.Fatalf("unexpected sql: %q", sql)
+	}
+}
+
+func TestSqlJoinWithAlias(t *testing.T) {
+	e := newEngineWithSQL()
+	sql := unmarshalExecute(t, e, `{
+		"$sql": [
+			["$select","$u.name","$o.total"],
+			["$from",["$as","$users","$u"]],
+			["$join",["$as","$orders","$o"],["$eq","$u.id","$o.user_id"]],
+			["$where",["$gt","$o.total",100]]
+		]
+	}`)
+	if !strings.Contains(sql, "users as u") ||
+		!strings.Contains(sql, "join orders as o") ||
+		!strings.Contains(sql, "u.id = o.user_id") {
+		t.Fatalf("unexpected sql: %q", sql)
+	}
+}
+
+func TestSqlLeftJoinNull(t *testing.T) {
+	e := newEngineWithSQL()
+	sql := unmarshalExecute(t, e, `{
+		"$sql": [
+			["$select","$u.name","$o.total"],
+			["$from",["$as","$users","$u"]],
+			["$left-join",["$as","$orders","$o"],["$eq","$u.id","$o.user_id"]],
+			["$where",["$is","$o.total",null]]
+		]
+	}`)
+	if !strings.Contains(sql, "left join") ||
+		!strings.Contains(sql, "o.total is null") {
+		t.Fatalf("unexpected sql: %q", sql)
+	}
+}
+
+func TestSqlInsert(t *testing.T) {
+	e := newEngineWithSQL()
+	sql := unmarshalExecute(t, e, `{
+		"$sql": [
+			["$insert-into","$users","$name","$age","$email"],
+			["$values","Alice",30,"alice@example.com"]
+		]
+	}`)
+	if !strings.Contains(sql, "insert into users") ||
+		!strings.Contains(sql, "values") ||
+		!strings.Contains(sql, "'Alice'") {
+		t.Fatalf("unexpected sql: %q", sql)
+	}
+}
+
+func TestSqlDelete(t *testing.T) {
+	e := newEngineWithSQL()
+	sql := unmarshalExecute(t, e, `{
+		"$sql": [
+			["$delete-from","$sessions"],
+			["$where",["$lt","$expired_at","2024-01-01"]]
+		]
+	}`)
+	if !strings.Contains(sql, "delete from sessions") ||
+		!strings.Contains(sql, "expired_at < '2024-01-01'") {
+		t.Fatalf("unexpected sql: %q", sql)
+	}
+}
+
+func TestSqlUpdate(t *testing.T) {
+	e := newEngineWithSQL()
+	sql := unmarshalExecute(t, e, `{
+		"$sql": [
+			["$update","$users"],
+			["$set",{"$age":31,"$status":"active"}],
+			["$where",["$eq","$id",42]]
+		]
+	}`)
+	if !strings.Contains(sql, "update users") ||
+		!strings.Contains(sql, "age = 31") ||
+		!strings.Contains(sql, "id = 42") {
+		t.Fatalf("unexpected sql: %q", sql)
+	}
+}
+
+func TestSqlDollarEscape(t *testing.T) {
+	e := newEngineWithSQL()
+	sql := unmarshalExecute(t, e, `{
+		"$sql": [
+			["$select","$name","$sku"],
+			["$from","$products"],
+			["$where",["$and",
+				["$like","$sku","$$PROMO-%"],
+				["$is-not","$deleted_at",null],
+				["$eq","$is_active",true]]]
+		]
+	}`)
+	if !strings.Contains(sql, "sku like '$PROMO-%'") ||
+		!strings.Contains(sql, "deleted_at is not null") ||
+		!strings.Contains(sql, "is_active = true") {
+		t.Fatalf("unexpected sql: %q", sql)
+	}
+}
+
+func TestSqlGroupByAggregates(t *testing.T) {
+	e := newEngineWithSQL()
+	sql := unmarshalExecute(t, e, `{
+		"$sql": [
+			["$select","$category",
+				["$as",["$count","$*"],"$cnt"],
+				["$as",["$avg","$price"],"$avg_price"]],
+			["$from","$products"],
+			["$group-by","$category"],
+			["$order-by","$avg_price","$desc"],
+			["$limit",50]
+		]
+	}`)
+	if !strings.Contains(sql, "group by category") ||
+		!strings.Contains(sql, "count(*)") ||
+		!strings.Contains(sql, "order by avg_price desc") ||
+		!strings.Contains(sql, "limit 50") {
+		t.Fatalf("unexpected sql: %q", sql)
+	}
+}
+
+func TestSqlCrossJoin(t *testing.T) {
+	e := newEngineWithSQL()
+	sql := unmarshalExecute(t, e, `{
+		"$sql": [
+			["$select","$u.name","$d.dept_name"],
+			["$from",["$as","$users","$u"]],
+			["$cross-join",["$as","$departments","$d"]]
+		]
+	}`)
+	if !strings.Contains(sql, "cross join departments as d") {
+		t.Fatalf("unexpected sql: %q", sql)
+	}
+}
